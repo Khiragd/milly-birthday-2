@@ -1,4 +1,4 @@
-      if (isPowerOn && isCartridgeInserted) {<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -64,17 +64,6 @@
         0 0 10px #ff007f;
       letter-spacing: 2px;
       transform: rotate(-2deg);
-    }
-    
-    .power-button {
-      width: 25px;
-      height: 25px;
-      background-color: #ff1493;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(255, 0, 0, 0.7), 
-                  inset 0 0 5px rgba(255, 255, 255, 0.7);
-      border: 3px solid white;
     }
     
     .screen {
@@ -226,8 +215,6 @@
       gap: 20px;
     }
     
-    /* Cartridge styles removed */
-    
     .loading-text {
       color: #ff00ff;
       font-size: 24px;
@@ -370,12 +357,9 @@
 </head>
 <body>
   <div class="container">
-    <!-- Cartridge removed as requested -->
-    
     <div class="n64-console">
       <div class="console-top">
         <div class="logo">SUPER N64</div>
-        <div class="power-button" id="power-button"></div>
       </div>
       
       <div class="screen">
@@ -385,7 +369,7 @@
           <div class="volume-button" id="mute-button">🔊</div>
         </div>
         <div class="music-info">BGM: Retro Game Music</div>
-        <div class="start-message glitch-text" id="start-message">POWER ON AND PRESS START</div>
+        <div class="start-message glitch-text" id="start-message">PRESS START TO PLAY</div>
         <div class="loading-text" id="loading-text">LOADING...</div>
         <div class="video-container">
           <video id="game-video" controls>
@@ -439,8 +423,6 @@
   
   <script>
     // DOM elements
-    const cartridge = document.getElementById('cartridge');
-    const powerButton = document.getElementById('power-button');
     const playButton = document.getElementById('play-button');
     const gameVideo = document.getElementById('game-video');
     const startMessage = document.getElementById('start-message');
@@ -449,11 +431,7 @@
     const muteButton = document.getElementById('mute-button');
     
     // Game state
-    let isPowerOn = false;
-    let isCartridgeInserted = false;
     let isMuted = false;
-    
-    // We'll start music only when play button is pressed, not on page load
     
     // Mute button functionality
     muteButton.addEventListener('click', () => {
@@ -629,105 +607,7 @@
       };
     }
     
-    // No cartridge needed - it's always inserted
-    isCartridgeInserted = true;
-    cartridge.classList.add('cartridge-inserted');
-    startMessage.textContent = "POWER ON AND PRESS START";
-    startMessage.style.color = "#00ff9f";
-    
-    // Power button
-    powerButton.addEventListener('click', () => {
-      playBeep();
-      isPowerOn = !isPowerOn;
-      
-      if (isPowerOn) {
-        powerButton.style.boxShadow = '0 0 15px rgba(255, 20, 147, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9)';
-        if (isCartridgeInserted) {
-          startMessage.textContent = "PRESS START TO PLAY";
-          startMessage.style.color = "#ff00ff";
-        } else {
-          startMessage.textContent = "INSERT CARTRIDGE";
-          startMessage.style.color = "#ff5555";
-        }
-      } else {
-        powerButton.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.7), inset 0 0 5px rgba(255, 255, 255, 0.7)';
-        resetConsole();
-        startMessage.textContent = "POWER OFF";
-        startMessage.style.color = "#ff5555";
-      }
-    });
-    
-    // Play button
-    playButton.addEventListener('click', () => {
-      // Add console logs to debug
-      console.log("START button pressed");
-      console.log("Power status:", isPowerOn);
-      console.log("Cartridge status:", isCartridgeInserted);
-        playStartSound();
-        startMessage.style.display = 'none';
-        loadingText.style.display = 'block';
-        
-        // Start background music
-        backgroundMusic.volume = 0.3;
-        backgroundMusic.play().catch(error => {
-          console.log("Music play failed, falling back to generated music");
-          generateAndPlayMusic();
-        });
-        
-        // Simulate loading
-        setTimeout(() => {
-          loadingText.style.display = 'none';
-          gameVideo.style.display = 'block';
-          // Try multiple ways to play the video
-          try {
-            gameVideo.play().catch(error => {
-              console.error("Video play failed with error:", error);
-              // Sometimes we need to make video visible first
-              gameVideo.style.display = 'block';
-              setTimeout(() => {
-                gameVideo.play().catch(e => console.error("Second attempt failed:", e));
-              }, 500);
-            });
-          } catch (error) {
-            console.error("Error playing video:", error);
-          }
-          
-          // Video ended event
-          gameVideo.addEventListener('ended', () => {
-            resetConsole();
-            startMessage.textContent = "GAME OVER - PRESS START TO PLAY AGAIN";
-            startMessage.style.color = "#00ff9f";
-            
-            // Stop music when video ends
-            backgroundMusic.pause();
-            if (window.musicController) {
-              window.musicController.stop();
-            }
-          });
-        }, 2000);
-      } else if (!isPowerOn) {
-        playBeep();
-        startMessage.textContent = "PLEASE POWER ON FIRST";
-        startMessage.style.color = "#ff5555";
-        // Add shake animation
-        startMessage.style.animation = "glitch 0.5s";
-        setTimeout(() => {
-          startMessage.style.animation = "blink 1s infinite";
-        }, 500);
-      }
-      }
-    });
-    
-    // Reset console
-    function resetConsole() {
-      gameVideo.style.display = 'none';
-      gameVideo.pause();
-      gameVideo.currentTime = 0;
-      startMessage.style.display = 'block';
-      loadingText.style.display = 'none';
-    }
-    
-    // Check if Cloudinary URL might need correction (the URL format seems unusual)
+    // Check if Cloudinary URL might need correction
     const cloudinaryUrl = "https://asset.cloudinary.com/dchc7oykk/3af332b7149087c094d9383d7c522e25";
     // Alternative URL formats to try if the main one doesn't work
     const alternativeUrl = "https://res.cloudinary.com/dchc7oykk/video/upload/3af332b7149087c094d9383d7c522e25";
@@ -741,6 +621,65 @@
         gameVideo.load();
       }
     });
+    
+    // Play button
+    playButton.addEventListener('click', () => {
+      // Add console logs to debug
+      console.log("START button pressed");
+      
+      playStartSound();
+      startMessage.style.display = 'none';
+      loadingText.style.display = 'block';
+      
+      // Start background music
+      backgroundMusic.volume = 0.3;
+      backgroundMusic.play().catch(error => {
+        console.log("Music play failed, falling back to generated music");
+        generateAndPlayMusic();
+      });
+      
+      // Simulate loading
+      setTimeout(() => {
+        loadingText.style.display = 'none';
+        gameVideo.style.display = 'block';
+        
+        // Try multiple ways to play the video
+        try {
+          gameVideo.play().catch(error => {
+            console.error("Video play failed with error:", error);
+            // Sometimes we need to make video visible first
+            gameVideo.style.display = 'block';
+            setTimeout(() => {
+              gameVideo.play().catch(e => console.error("Second attempt failed:", e));
+            }, 500);
+          });
+        } catch (error) {
+          console.error("Error playing video:", error);
+        }
+        
+        // Video ended event
+        gameVideo.addEventListener('ended', () => {
+          resetConsole();
+          startMessage.textContent = "GAME OVER - PRESS START TO PLAY AGAIN";
+          startMessage.style.color = "#00ff9f";
+          
+          // Stop music when video ends
+          backgroundMusic.pause();
+          if (window.musicController) {
+            window.musicController.stop();
+          }
+        });
+      }, 2000);
+    });
+    
+    // Reset console
+    function resetConsole() {
+      gameVideo.style.display = 'none';
+      gameVideo.pause();
+      gameVideo.currentTime = 0;
+      startMessage.style.display = 'block';
+      loadingText.style.display = 'none';
+    }
     
     // Add click effects to controller buttons
     const controlButtons = document.querySelectorAll('.control-button, .dpad-button, .c-button');
