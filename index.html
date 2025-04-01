@@ -372,14 +372,16 @@
         <div class="start-message glitch-text" id="start-message">PRESS START TO PLAY</div>
         <div class="loading-text" id="loading-text">LOADING...</div>
         <div class="video-container">
-          <video id="game-video" controls>
-            <!-- Cloudinary video link - added multiple sources to try different formats -->
-            <source src="https://asset.cloudinary.com/dchc7oykk/3af332b7149087c094d9383d7c522e25" type="video/mp4">
-            <source src="https://res.cloudinary.com/dchc7oykk/video/upload/3af332b7149087c094d9383d7c522e25" type="video/mp4">
-            <source src="https://res.cloudinary.com/dchc7oykk/video/upload/v1/3af332b7149087c094d9383d7c522e25" type="video/mp4">
-            <!-- Fallback message -->
-            Your browser does not support the video tag or the video URL might be incorrect.
-          </video>
+          <!-- YouTube iframe instead of HTML5 video -->
+          <iframe id="game-video" 
+            width="100%" 
+            height="100%" 
+            src="https://www.youtube.com/embed/jFg-rIhhQwQ?enablejsapi=1&controls=0&rel=0&autoplay=0" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen
+            style="display: none;">
+          </iframe>
         </div>
       </div>
       
@@ -607,20 +609,7 @@
       };
     }
     
-    // Check if Cloudinary URL might need correction
-    const cloudinaryUrl = "https://asset.cloudinary.com/dchc7oykk/3af332b7149087c094d9383d7c522e25";
-    // Alternative URL formats to try if the main one doesn't work
-    const alternativeUrl = "https://res.cloudinary.com/dchc7oykk/video/upload/3af332b7149087c094d9383d7c522e25";
-    
-    // Try both URLs
-    gameVideo.addEventListener('error', () => {
-      console.log("Video error with primary URL, trying alternative...");
-      const videoSource = gameVideo.querySelector('source');
-      if (videoSource.src === cloudinaryUrl) {
-        videoSource.src = alternativeUrl;
-        gameVideo.load();
-      }
-    });
+    // YouTube integration - no need for URL validation
     
     // Play button
     playButton.addEventListener('click', () => {
@@ -644,39 +633,73 @@
         gameVideo.style.display = 'block';
         
         // Try multiple ways to play the video
+        // Play YouTube video
+        gameVideo.style.display = 'block';
+        
+        // Use YouTube iframe API to control the video
         try {
-          gameVideo.play().catch(error => {
-            console.error("Video play failed with error:", error);
-            // Sometimes we need to make video visible first
-            gameVideo.style.display = 'block';
-            setTimeout(() => {
-              gameVideo.play().catch(e => console.error("Second attempt failed:", e));
-            }, 500);
-          });
+          // Create YouTube Player API script
+          if (!window.YT) {
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            
+            window.onYouTubeIframeAPIReady = function() {
+              playYouTubeVideo();
+            };
+          } else {
+            playYouTubeVideo();
+          }
         } catch (error) {
-          console.error("Error playing video:", error);
+          console.error("Error playing YouTube video:", error);
         }
         
-        // Video ended event
-        gameVideo.addEventListener('ended', () => {
-          resetConsole();
-          startMessage.textContent = "GAME OVER - PRESS START TO PLAY AGAIN";
-          startMessage.style.color = "#00ff9f";
-          
-          // Stop music when video ends
-          backgroundMusic.pause();
-          if (window.musicController) {
-            window.musicController.stop();
+        function playYouTubeVideo() {
+          try {
+            // Get the iframe and try to play
+            if (window.YT && window.YT.Player) {
+              const player = new YT.Player('game-video', {
+                events: {
+                  'onReady': function(event) {
+                    event.target.playVideo();
+                  },
+                  'onStateChange': function(event) {
+                    // When video ends (state = 0)
+                    if (event.data === 0) {
+                      resetConsole();
+                      startMessage.textContent = "GAME OVER - PRESS START TO PLAY AGAIN";
+                      startMessage.style.color = "#00ff9f";
+                      
+                      // Stop music when video ends
+                      backgroundMusic.pause();
+                      if (window.musicController) {
+                        window.musicController.stop();
+                      }
+                    }
+                  }
+                }
+              });
+              window.ytPlayer = player;
+            } else {
+              console.log("YouTube API not ready yet");
+              setTimeout(playYouTubeVideo, 500);
+            }
+          } catch (e) {
+            console.error("Error in YouTube player:", e);
           }
-        });
+        }
+        
+        // Video ended event is handled in the YouTube API onStateChange
       }, 2000);
     });
     
     // Reset console
     function resetConsole() {
       gameVideo.style.display = 'none';
-      gameVideo.pause();
-      gameVideo.currentTime = 0;
+      if (window.ytPlayer && window.ytPlayer.stopVideo) {
+        window.ytPlayer.stopVideo();
+      }
       startMessage.style.display = 'block';
       loadingText.style.display = 'none';
     }
