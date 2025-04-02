@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Retro Pink Nintendo 64 Emulator</title>
   <style>
-    @import url('https://fonts.cdnjs.cloudflare.com/ajax/libs/pixelicious/1.0.6/pixelicious.min.css');
-    
     body {
       font-family: 'Courier New', monospace;
       margin: 0;
@@ -66,6 +64,17 @@
       transform: rotate(-2deg);
     }
     
+    .power-button {
+      width: 25px;
+      height: 25px;
+      background-color: #ff1493;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.7), 
+                  inset 0 0 5px rgba(255, 255, 255, 0.7);
+      border: 3px solid white;
+    }
+    
     .screen {
       background-color: #000;
       border-radius: 10px;
@@ -88,10 +97,11 @@
       align-items: center;
     }
     
-    video {
-      max-width: 100%;
-      max-height: 100%;
+    iframe {
+      width: 100%;
+      height: 100%;
       display: none;
+      border: none;
     }
     
     .start-message {
@@ -259,10 +269,6 @@
       border: 2px solid white;
     }
     
-    .hidden {
-      display: none;
-    }
-    
     .scanlines {
       position: absolute;
       top: 0;
@@ -310,39 +316,6 @@
       98% { transform: translate(3px, -2px); }
     }
     
-    .volume-controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      display: flex;
-      gap: 5px;
-      z-index: 20;
-    }
-    
-    .volume-button {
-      width: 30px;
-      height: 30px;
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-size: 14px;
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-    }
-    
-    .music-info {
-      position: absolute;
-      bottom: 5px;
-      left: 10px;
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.7);
-      text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
-      z-index: 20;
-    }
-    
     @media (max-width: 600px) {
       .controller {
         flex-direction: column;
@@ -366,19 +339,10 @@
       <div class="screen">
         <div class="scanlines"></div>
         <div class="crt-effect"></div>
-    <!-- Removed volume controls since background music is removed -->
         <div class="start-message glitch-text" id="start-message">POWER ON AND PRESS START</div>
         <div class="loading-text" id="loading-text">LOADING...</div>
         <div class="video-container">
-          <iframe id="game-video" 
-            width="100%" 
-            height="100%" 
-            src="https://www.youtube.com/embed/8WsilvFJxPc?enablejsapi=1&controls=0&rel=0&autoplay=1&mute=0" 
-            frameborder="0" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowfullscreen
-            style="display: none;">
-          </iframe>
+          <iframe id="game-video" src="https://www.youtube.com/embed/8WsilvFJxPc?enablejsapi=1&controls=0&rel=0" allow="autoplay"></iframe>
         </div>
       </div>
       
@@ -413,196 +377,109 @@
     </div>
   </div>
   
-  <!-- Background music removed as requested -->
-  
   <script>
-    // DOM elements
-    const powerButton = document.getElementById('power-button');
-    const playButton = document.getElementById('play-button');
-    const gameVideo = document.getElementById('game-video');
-    const startMessage = document.getElementById('start-message');
-    const loadingText = document.getElementById('loading-text');
-    
-    // Game state
-    let isPoweredOn = false;
-    
-    // Create ChipTune-like sounds
-    function createOscillator(frequency, duration, type = 'square') {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM elements
+      const powerButton = document.getElementById('power-button');
+      const playButton = document.getElementById('play-button');
+      const gameVideo = document.getElementById('game-video');
+      const startMessage = document.getElementById('start-message');
+      const loadingText = document.getElementById('loading-text');
       
-      oscillator.type = type;
-      oscillator.frequency.value = frequency;
+      // Game state
+      let isPoweredOn = false;
       
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + duration);
-    }
-    
-    function playBeep() {
-      createOscillator(440, 0.1);
-    }
-    
-    function playStartSound() {
-      // Play a sequence of tones for a startup sound
-      createOscillator(523.25, 0.1); // C5
-      setTimeout(() => createOscillator(659.25, 0.1), 100); // E5
-      setTimeout(() => createOscillator(783.99, 0.1), 200); // G5
-      setTimeout(() => createOscillator(1046.50, 0.2), 300); // C6
-    }
-    
-    // Removed generateAndPlayMusic function and other music-related functions, keeping only sound effects
-    }
-    
-    // Power button handler
-    powerButton.addEventListener('click', () => {
-      playBeep();
-      isPoweredOn = !isPoweredOn;
-      
-      if (isPoweredOn) {
-        powerButton.style.boxShadow = '0 0 15px rgba(255, 20, 147, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9)';
-        startMessage.textContent = "PRESS START TO PLAY";
-        startMessage.style.color = "#ff00ff";
-      } else {
-        powerButton.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.7), inset 0 0 5px rgba(255, 255, 255, 0.7)';
-        resetConsole();
-        startMessage.textContent = "POWER OFF";
-        startMessage.style.color = "#ff5555";
-      }
-    });
-    
-    // Play button
-    playButton.addEventListener('click', () => {
-      // Add console logs to debug
-      console.log("START button pressed");
-      console.log("Power status:", isPoweredOn);
-      
-      if (isPoweredOn) {
-        playStartSound();
-        startMessage.style.display = 'none';
-        loadingText.style.display = 'block';
-      
-      // No background music to start
-      
-      // Simulate loading
-      setTimeout(() => {
-        loadingText.style.display = 'none';
-        gameVideo.style.display = 'block';
+      // Simple beep sound
+      function playBeep() {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
         
-        // Try multiple ways to play the video
-        // Play YouTube video
-        gameVideo.style.display = 'block';
+        oscillator.type = 'square';
+        oscillator.frequency.value = 440;
+        gainNode.gain.value = 0.1;
         
-        // Use YouTube iframe API to control the video
-        try {
-          // Create YouTube Player API script
-          if (!window.YT) {
-            const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-            
-            window.onYouTubeIframeAPIReady = function() {
-              playYouTubeVideo();
-            };
-          } else {
-            playYouTubeVideo();
-          }
-        } catch (error) {
-          console.error("Error playing YouTube video:", error);
-        }
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
         
-        function playYouTubeVideo() {
-          try {
-            // Get the iframe and try to play using direct iframe interaction first
-            const iframe = document.getElementById('game-video');
-            iframe.src = iframe.src.replace('autoplay=0', 'autoplay=1');
-            
-            // Also try the YouTube API as a backup method
-            if (window.YT && window.YT.Player) {
-              const player = new YT.Player('game-video', {
-                events: {
-                  'onReady': function(event) {
-                    event.target.playVideo();
-                  },
-                  'onStateChange': function(event) {
-                    // When video ends (state = 0)
-                    if (event.data === 0) {
-                      resetConsole();
-                      startMessage.textContent = "GAME OVER - PRESS START TO PLAY AGAIN";
-                      startMessage.style.color = "#00ff9f";
-                      
-                      // No music to stop
-                    }
-                  }
-                }
-              });
-              window.ytPlayer = player;
-            } else {
-              console.log("YouTube API not ready yet");
-              setTimeout(playYouTubeVideo, 500);
-            }
-          } catch (e) {
-            console.error("Error in YouTube player:", e);
-          }
-        }
-        
-        // Video ended event is handled in the YouTube API onStateChange
-      } else {
-        playBeep();
-        startMessage.textContent = "PLEASE POWER ON FIRST";
-        startMessage.style.color = "#ff5555";
-        // Add shake animation
-        startMessage.style.animation = "glitch 0.5s";
-        setTimeout(() => {
-          startMessage.style.animation = "blink 1s infinite";
-        }, 500);
-      }
-      }, 2000);
-    });
-    
-    // Reset console
-    function resetConsole() {
-      gameVideo.style.display = 'none';
-      if (window.ytPlayer && window.ytPlayer.stopVideo) {
-        window.ytPlayer.stopVideo();
-      }
-      startMessage.style.display = 'block';
-      loadingText.style.display = 'none';
-    }
-    
-    // Add click effects to controller buttons
-    const controlButtons = document.querySelectorAll('.control-button, .dpad-button, .c-button');
-    controlButtons.forEach(button => {
-      button.addEventListener('mousedown', () => {
-        playBeep();
-        button.style.transform = 'scale(0.95)';
-      });
-      
-      button.addEventListener('mouseup', () => {
-        button.style.transform = 'scale(1)';
-      });
-      
-      button.addEventListener('mouseleave', () => {
-        button.style.transform = 'scale(1)';
-      });
-    });
-    
-    // Add random glitch effect
-    setInterval(() => {
-      if (Math.random() > 0.95) {
-        document.querySelector('.screen').style.filter = `hue-rotate(${Math.random() * 360}deg)`;
-        setTimeout(() => {
-          document.querySelector('.screen').style.filter = 'none';
+        oscillator.start();
+        setTimeout(function() {
+          oscillator.stop();
         }, 100);
       }
-    }, 5000);
+      
+      // Power button handler
+      powerButton.addEventListener('click', function() {
+        playBeep();
+        isPoweredOn = !isPoweredOn;
+        
+        if (isPoweredOn) {
+          powerButton.style.boxShadow = '0 0 15px rgba(255, 20, 147, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9)';
+          startMessage.textContent = "PRESS START TO PLAY";
+          startMessage.style.color = "#ff00ff";
+        } else {
+          powerButton.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.7), inset 0 0 5px rgba(255, 255, 255, 0.7)';
+          resetConsole();
+          startMessage.textContent = "POWER OFF";
+          startMessage.style.color = "#ff5555";
+        }
+      });
+      
+      // Start button handler
+      playButton.addEventListener('click', function() {
+        console.log("START button pressed");
+        console.log("Power status:", isPoweredOn);
+        
+        if (isPoweredOn) {
+          playBeep();
+          startMessage.style.display = 'none';
+          loadingText.style.display = 'block';
+          
+          // Simulate loading and then show video
+          setTimeout(function() {
+            loadingText.style.display = 'none';
+            gameVideo.style.display = 'block';
+            
+            // Directly manipulate iframe to force video play
+            gameVideo.src = gameVideo.src.replace('rel=0', 'rel=0&autoplay=1');
+          }, 2000);
+        } else {
+          playBeep();
+          startMessage.textContent = "PLEASE POWER ON FIRST";
+          startMessage.style.color = "#ff5555";
+          // Add shake animation
+          startMessage.style.animation = "glitch 0.5s";
+          setTimeout(function() {
+            startMessage.style.animation = "blink 1s infinite";
+          }, 500);
+        }
+      });
+      
+      // Reset console function
+      function resetConsole() {
+        gameVideo.style.display = 'none';
+        gameVideo.src = gameVideo.src.replace('autoplay=1', 'autoplay=0');
+        startMessage.style.display = 'block';
+        loadingText.style.display = 'none';
+      }
+      
+      // Button effect for all buttons
+      const allButtons = document.querySelectorAll('.control-button, .dpad-button, .c-button');
+      allButtons.forEach(function(button) {
+        button.addEventListener('mousedown', function() {
+          playBeep();
+          this.style.transform = 'scale(0.95)';
+        });
+        
+        button.addEventListener('mouseup', function() {
+          this.style.transform = 'scale(1)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+          this.style.transform = 'scale(1)';
+        });
+      });
+    });
   </script>
 </body>
 </html>
