@@ -365,18 +365,14 @@
       <div class="screen">
         <div class="scanlines"></div>
         <div class="crt-effect"></div>
-        <div class="volume-controls">
-          <div class="volume-button" id="mute-button">🔊</div>
-        </div>
-        <div class="music-info">BGM: Retro Game Music</div>
+    <!-- Removed volume controls since background music is removed -->
         <div class="start-message glitch-text" id="start-message">PRESS START TO PLAY</div>
         <div class="loading-text" id="loading-text">LOADING...</div>
         <div class="video-container">
-          <!-- YouTube iframe instead of HTML5 video -->
           <iframe id="game-video" 
             width="100%" 
             height="100%" 
-            src="https://www.youtube.com/embed/jFg-rIhhQwQ?enablejsapi=1&controls=0&rel=0&autoplay=0" 
+            src="https://www.youtube.com/embed/8WsilvFJxPc?enablejsapi=1&controls=0&rel=0&autoplay=0" 
             frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen
@@ -416,12 +412,7 @@
     </div>
   </div>
   
-  <!-- Using a better audio solution with some actual 8-bit music -->
-  <audio id="background-music" loop>
-    <!-- Replace this with your actual music file path -->
-    <source src="retro-music.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
+  <!-- Background music removed as requested -->
   
   <script>
     // DOM elements
@@ -429,34 +420,6 @@
     const gameVideo = document.getElementById('game-video');
     const startMessage = document.getElementById('start-message');
     const loadingText = document.getElementById('loading-text');
-    const backgroundMusic = document.getElementById('background-music');
-    const muteButton = document.getElementById('mute-button');
-    
-    // Game state
-    let isMuted = false;
-    
-    // Mute button functionality
-    muteButton.addEventListener('click', () => {
-      isMuted = !isMuted;
-      if (isMuted) {
-        // Stop either HTML audio or generated music
-        backgroundMusic.pause();
-        if (window.musicController) {
-          window.musicController.stop();
-        }
-        muteButton.textContent = '🔇';
-      } else {
-        // Resume appropriate audio
-        if (window.musicController) {
-          window.musicController.start();
-        } else {
-          backgroundMusic.play().catch(e => {
-            generateAndPlayMusic();
-          });
-        }
-        muteButton.textContent = '🔊';
-      }
-    });
     
     // Create ChipTune-like sounds
     function createOscillator(frequency, duration, type = 'square') {
@@ -489,124 +452,7 @@
       setTimeout(() => createOscillator(1046.50, 0.2), 300); // C6
     }
     
-    // This improved function generates more complete background music
-    function generateAndPlayMusic() {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      // Create more complex 8-bit music
-      let musicIsPlaying = true;
-      let mainOscillator = null;
-      let bassOscillator = null;
-      
-      // Main melody - classic retro game progression
-      const melodyNotes = [
-        { note: 523.25, duration: 0.2 }, // C5
-        { note: 587.33, duration: 0.2 }, // D5
-        { note: 659.25, duration: 0.2 }, // E5
-        { note: 698.46, duration: 0.2 }, // F5
-        { note: 783.99, duration: 0.4 }, // G5
-        { note: 659.25, duration: 0.2 }, // E5
-        { note: 587.33, duration: 0.2 }, // D5
-        { note: 523.25, duration: 0.4 }, // C5
-        { note: 587.33, duration: 0.2 }, // D5
-        { note: 659.25, duration: 0.2 }, // E5
-        { note: 523.25, duration: 0.4 }, // C5
-      ];
-      
-      // Bass line
-      const bassNotes = [
-        { note: 261.63, duration: 0.4 }, // C3
-        { note: 196.00, duration: 0.4 }, // G2
-        { note: 220.00, duration: 0.4 }, // A2
-        { note: 261.63, duration: 0.4 }, // C3
-      ];
-      
-      let melodyIndex = 0;
-      let bassIndex = 0;
-      
-      function playMelody() {
-        if (!musicIsPlaying) return;
-        
-        const currentNote = melodyNotes[melodyIndex];
-        
-        // Create oscillator for melody
-        mainOscillator = audioContext.createOscillator();
-        mainOscillator.type = 'square';
-        mainOscillator.frequency.value = currentNote.note;
-        
-        // Create gain node for volume envelope
-        const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + currentNote.duration * 0.9);
-        
-        // Connect and start
-        mainOscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        mainOscillator.start();
-        mainOscillator.stop(audioContext.currentTime + currentNote.duration);
-        
-        // Move to next note
-        melodyIndex = (melodyIndex + 1) % melodyNotes.length;
-        
-        // Schedule next note
-        setTimeout(playMelody, currentNote.duration * 1000);
-      }
-      
-      function playBass() {
-        if (!musicIsPlaying) return;
-        
-        const currentBass = bassNotes[bassIndex];
-        
-        // Create oscillator for bass
-        bassOscillator = audioContext.createOscillator();
-        bassOscillator.type = 'triangle';
-        bassOscillator.frequency.value = currentBass.note;
-        
-        // Create gain node
-        const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.05, audioContext.currentTime + currentBass.duration * 0.9);
-        
-        // Connect and start
-        bassOscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        bassOscillator.start();
-        bassOscillator.stop(audioContext.currentTime + currentBass.duration);
-        
-        // Move to next note
-        bassIndex = (bassIndex + 1) % bassNotes.length;
-        
-        // Schedule next bass note
-        setTimeout(playBass, currentBass.duration * 1000);
-      }
-      
-      // Start both parts
-      playMelody();
-      playBass();
-      
-      // Make our music controller global so we can access it elsewhere
-      window.musicController = {
-        stop: function() {
-          musicIsPlaying = false;
-          if (mainOscillator) {
-            try {
-              mainOscillator.stop();
-            } catch (e) {}
-          }
-          if (bassOscillator) {
-            try {
-              bassOscillator.stop();
-            } catch (e) {}
-          }
-        },
-        start: function() {
-          if (!musicIsPlaying) {
-            musicIsPlaying = true;
-            playMelody();
-            playBass();
-          }
-        }
-      };
+    // Removed generateAndPlayMusic function and other music-related functions, keeping only sound effects
     }
     
     // YouTube integration - no need for URL validation
@@ -620,12 +466,7 @@
       startMessage.style.display = 'none';
       loadingText.style.display = 'block';
       
-      // Start background music
-      backgroundMusic.volume = 0.3;
-      backgroundMusic.play().catch(error => {
-        console.log("Music play failed, falling back to generated music");
-        generateAndPlayMusic();
-      });
+      // No background music to start
       
       // Simulate loading
       setTimeout(() => {
@@ -671,11 +512,7 @@
                       startMessage.textContent = "GAME OVER - PRESS START TO PLAY AGAIN";
                       startMessage.style.color = "#00ff9f";
                       
-                      // Stop music when video ends
-                      backgroundMusic.pause();
-                      if (window.musicController) {
-                        window.musicController.stop();
-                      }
+                      // No music to stop
                     }
                   }
                 }
