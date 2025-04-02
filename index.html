@@ -360,19 +360,20 @@
     <div class="n64-console">
       <div class="console-top">
         <div class="logo">SUPER N64</div>
+        <div class="power-button" id="power-button"></div>
       </div>
       
       <div class="screen">
         <div class="scanlines"></div>
         <div class="crt-effect"></div>
     <!-- Removed volume controls since background music is removed -->
-        <div class="start-message glitch-text" id="start-message">PRESS START TO PLAY</div>
+        <div class="start-message glitch-text" id="start-message">POWER ON AND PRESS START</div>
         <div class="loading-text" id="loading-text">LOADING...</div>
         <div class="video-container">
           <iframe id="game-video" 
             width="100%" 
             height="100%" 
-            src="https://www.youtube.com/embed/8WsilvFJxPc?enablejsapi=1&controls=0&rel=0&autoplay=0" 
+            src="https://www.youtube.com/embed/8WsilvFJxPc?enablejsapi=1&controls=0&rel=0&autoplay=1&mute=0" 
             frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen
@@ -416,10 +417,14 @@
   
   <script>
     // DOM elements
+    const powerButton = document.getElementById('power-button');
     const playButton = document.getElementById('play-button');
     const gameVideo = document.getElementById('game-video');
     const startMessage = document.getElementById('start-message');
     const loadingText = document.getElementById('loading-text');
+    
+    // Game state
+    let isPoweredOn = false;
     
     // Create ChipTune-like sounds
     function createOscillator(frequency, duration, type = 'square') {
@@ -455,16 +460,33 @@
     // Removed generateAndPlayMusic function and other music-related functions, keeping only sound effects
     }
     
-    // YouTube integration - no need for URL validation
+    // Power button handler
+    powerButton.addEventListener('click', () => {
+      playBeep();
+      isPoweredOn = !isPoweredOn;
+      
+      if (isPoweredOn) {
+        powerButton.style.boxShadow = '0 0 15px rgba(255, 20, 147, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.9)';
+        startMessage.textContent = "PRESS START TO PLAY";
+        startMessage.style.color = "#ff00ff";
+      } else {
+        powerButton.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.7), inset 0 0 5px rgba(255, 255, 255, 0.7)';
+        resetConsole();
+        startMessage.textContent = "POWER OFF";
+        startMessage.style.color = "#ff5555";
+      }
+    });
     
     // Play button
     playButton.addEventListener('click', () => {
       // Add console logs to debug
       console.log("START button pressed");
+      console.log("Power status:", isPoweredOn);
       
-      playStartSound();
-      startMessage.style.display = 'none';
-      loadingText.style.display = 'block';
+      if (isPoweredOn) {
+        playStartSound();
+        startMessage.style.display = 'none';
+        loadingText.style.display = 'block';
       
       // No background music to start
       
@@ -498,7 +520,11 @@
         
         function playYouTubeVideo() {
           try {
-            // Get the iframe and try to play
+            // Get the iframe and try to play using direct iframe interaction first
+            const iframe = document.getElementById('game-video');
+            iframe.src = iframe.src.replace('autoplay=0', 'autoplay=1');
+            
+            // Also try the YouTube API as a backup method
             if (window.YT && window.YT.Player) {
               const player = new YT.Player('game-video', {
                 events: {
@@ -528,6 +554,16 @@
         }
         
         // Video ended event is handled in the YouTube API onStateChange
+      } else {
+        playBeep();
+        startMessage.textContent = "PLEASE POWER ON FIRST";
+        startMessage.style.color = "#ff5555";
+        // Add shake animation
+        startMessage.style.animation = "glitch 0.5s";
+        setTimeout(() => {
+          startMessage.style.animation = "blink 1s infinite";
+        }, 500);
+      }
       }, 2000);
     });
     
